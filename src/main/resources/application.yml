@@ -4,17 +4,14 @@ spring:
     url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1
     username:
     password:
+    sql-script-encoding: UTF-8
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     database: H2
     show-sql: true
     hibernate:
       ddl-auto: update
-  http:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
 
 mybatis:
   mapper-locations: classpath:/mapper/**/*.xml
