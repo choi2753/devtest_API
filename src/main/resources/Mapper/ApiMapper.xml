@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.api.devtest.mapper.ApiMapper">
+
+    <select id="getAnnualTopSumAmtCust" resultType="com.api.devtest.common.DataMap">
+        SELECT *
+          FROM (
+                SELECT YEAR(TRN_LST.TRN_YMD) AS YEAR
+	                 , CUS_ACNT.CUS_NM AS NAME
+	                 , CUS_ACNT.CUS_ACN AS ACCT_NO
+	                 , SUM(TRN_LST.TRN_AMT - TRN_LST.FEE_AMT) AS SUM_AMT
+                  FROM TB_DEVTEST_TRN_LST TRN_LST
+                     , TB_DEVTEST_CUS_ACNT CUS_ACNT
+                 WHERE TRN_LST.CUS_ACN = CUS_ACNT.CUS_ACN
+                   AND TRN_LST.CNCL_YN != 'Y'
+                 GROUP BY YEAR, ACCT_NO
+                ) A
+         WHERE A.SUM_AMT >= ALL(SELECT SUM(TRN_LST_1.TRN_AMT - TRN_LST_1.FEE_AMT)
+                                  FROM TB_DEVTEST_TRN_LST TRN_LST_1
+                                 WHERE TRN_LST_1.CNCL_YN != 'Y'
+                                   AND A.YEAR = YEAR(TRN_LST_1.TRN_YMD)
+                                 GROUP BY YEAR(TRN_LST_1.TRN_YMD), TRN_LST_1.CUS_ACN
+                                )
+         ORDER BY A.YEAR
+    </select>
+
+    <select id="getAnnualNoTrnCust" resultType="com.api.devtest.common.DataMap">
+        SELECT TEMP1.YEAR AS YEAR
+             , TEMP1.CUS_NM AS NAME
+             , TEMP1.CUS_ACN AS ACCT_NO
+          FROM (
+                SELECT *
+                  FROM TB_DEVTEST_CUS_ACNT
+                     , (SELECT DISTINCT YEAR(TRN_YMD) AS YEAR
+                          FROM TB_DEVTEST_TRN_LST
+                        )
+                ) TEMP1
+          LEFT OUTER JOIN (SELECT YEAR(TRN_YMD) AS YEAR2
+                                , CUS_ACN AS CUS_ACN2
+                                , MAX(TRN_YMD) AS FNL_TRN_YMD
+                             FROM TB_DEVTEST_TRN_LST
+                            WHERE CNCL_YN != 'Y'
+                            GROUP BY YEAR2, CUS_ACN2
+                           ) TEMP2
+            ON TEMP1.CUS_ACN = TEMP2.CUS_ACN2
+           AND TEMP1.YEAR = TEMP2.YEAR2
+         WHERE TEMP2.FNL_TRN_YMD IS NULL
+         ORDER BY TEMP1.YEAR, TEMP1.CUS_ACN
+    </select>
+
+    <select id="getTrnYear" resultType="com.api.devtest.common.DataMap">
+        SELECT DISTINCT YEAR(TRN_YMD) AS YEAR
+          FROM TB_DEVTEST_TRN_LST
+    </select>
+
+    <select id="getMngmBrnTrnAmtYear" resultType="com.api.devtest.common.DataMap" parameterType="com.api.devtest.common.DataMap">
+        SELECT MNGM_BRN.MNGM_BRM AS BR_NAME
+             , MNGM_BRN.MNGM_BRCD AS BR_CODE
+             , SUM(TRN_LST.TRN_AMT) AS SUM_AMT
+          FROM TB_DEVTEST_MNGM_BRN MNGM_BRN
+             , TB_DEVTEST_CUS_ACNT CUS_ACNT
+             , TB_DEVTEST_TRN_LST TRN_LST
+         WHERE MNGM_BRN.MNGM_BRCD = CUS_ACNT.MNGM_BRCD
+           AND CUS_ACNT.CUS_ACN = TRN_LST.CUS_ACN
+           AND TRN_LST.CNCL_YN != 'Y'
+           AND YEAR(TRN_LST.TRN_YMD) = #{year}
+         GROUP BY BR_CODE
+         ORDER BY SUM_AMT DESC
+    </select>
+
+    <select id="getMngmBrnTrnAmt" resultType="com.api.devtest.common.DataMap" parameterType="com.api.devtest.common.DataMap">
+        SELECT MNGM_BRN.MNGM_BRM AS BR_NAME
+             , MNGM_BRN.MNGM_BRCD AS BR_CODE
+             , SUM(TRN_LST.TRN_AMT) AS SUM_AMT
+          FROM TB_DEVTEST_MNGM_BRN MNGM_BRN
+             , TB_DEVTEST_CUS_ACNT CUS_ACNT
+             , TB_DEVTEST_TRN_LST TRN_LST
+         WHERE MNGM_BRN.MNGM_BRCD = CUS_ACNT.MNGM_BRCD
+           AND CUS_ACNT.CUS_ACN = TRN_LST.CUS_ACN
+           AND TRN_LST.CNCL_YN != 'Y'
+           AND MNGM_BRN.MNGM_BRM = #{brName}
+         GROUP BY BR_CODE
+    </select>
+
+    <update id="putBranchTransfer" parameterType="com.api.devtest.common.DataMap">
+        UPDATE TB_DEVTEST_CUS_ACNT
+           SET MNGM_BRCD = #{afterBrCode}
+         WHERE MNGM_BRCD = #{brCode}
+    </update>
+
+    <delete id="deleteBranch" parameterType="com.api.devtest.common.DataMap">
+        DELETE FROM TB_DEVTEST_MNGM_BRN
+         WHERE MNGM_BRCD = #{brCode}
+    </delete>
+</mapper>
