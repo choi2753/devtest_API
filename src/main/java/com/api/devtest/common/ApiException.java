@@ -3,9 +3,12 @@ package com.api.devtest.common;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @JsonPropertyOrder(value = {"code", "message"})
 public class ApiException extends Exception{
