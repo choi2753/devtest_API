@@ -32,6 +32,47 @@
 
 ### 3. 빌드 및 실행방법
 
+1. https://github.com/choi2753/devtest_API에서 프로젝트를 다운받는다.
+2. 다운받은 파일의 압축을 푼다
+3. IntelliJ 실행 후 Import Project를 선택하고 압축을 풀었던 프로젝트 폴더에서
+build.gradle을 선택하고 OK를 누른다.
+4. Import Project from Gradle 창이 뜨면 상단에 Use auto-import만 체크하고 OK를 누른다.
+5. 프로젝트를 불러오면서 Gradle이 라이브러리를 가져올 때 까지 기다린다.
+6. 화면 우측에 Gradle 조작 창을 열고 `devtest/Tasks/application/bootrun`을
+더블클릭해서 구동한다.
+7. Unit Test는 Gradle 조작창의 `devtest/Tasks/verification/test`를
+실행하면 수행할 수 있다.
+8. API 테스트는 Postman 같은 API 테스트 도구로 수행해 볼 수 있다.
+
+- API 기능명세 1번 테스트 방법
+
+    1. 연도별 연간 합계 금액이 가장 많은 고객 조회 - GET
+        - URL : http://localhost:8080/customer/annual/top
+    
+- API 기능명세 2번 테스트 방법
+
+    1. 연도별 연간 거래가 없는 고객 조회 - GET
+        - URL : http://localhost:8080/customer/annual/missing
+
+- API 기능명세 3번 테스트 방법
+
+    1. 연도별 관리점별 거래금액 조회 - GET
+        - URL : http://localhost:8080/trnamt/branch/annual
+    
+- API 기능명세 4번 테스트 방법
+
+    1. 관리점 이관 - PUT
+        - URL : http://localhost:8080/transfer/branch
+        - BODY : { "brCode":"~~현재관리점코드~~", "afterBrCode":"~~이관할관리점코드~~" }
+        
+    2. 관리점 삭제 - DELETE
+        - URL : http://localhost:8080/transfer/branch
+        - BODY : { "brCode":"~~삭제할관리점코드~~" }
+        
+    3. 관리점 거래금액 조회 - GET
+        - URL : http://localhost:8080/trnamt/branch
+        - BODY : { "brName":"~~관리점명~~" }
+
 -----
 
 ### 4. 개발 중 문제해결
