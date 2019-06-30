@@ -30,8 +30,6 @@ public class ApiControllerTests {
 
     @Autowired
     private WebApplicationContext context;
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private MockMvc mockMvc;
 
