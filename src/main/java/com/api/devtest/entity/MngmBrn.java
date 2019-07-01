@@ -18,7 +18,7 @@ import java.util.List;
 public class MngmBrn {
 
     @Id
-    private String mngmBrcd;
+    private String mngmBrcd;    //관리점코드
 
-    private String mngmBrm;
+    private String mngmBrm;     //관리점명
 }

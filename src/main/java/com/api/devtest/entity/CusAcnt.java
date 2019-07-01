@@ -12,11 +12,11 @@ import lombok.Data;
 public class CusAcnt {
 
     @Id
-    private String cusAcn;
+    private String cusAcn;  //고객계좌번호
 
-    private String cusNm;
+    private String cusNm;   //고객명
 
     @ManyToOne
     @JoinColumn(name = "mngmBrcd")
-    private MngmBrn mngmBrn;
+    private MngmBrn mngmBrn;    //관리점코드
 }

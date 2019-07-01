@@ -3,21 +3,22 @@
 
 <mapper namespace="com.api.devtest.mapper.ApiMapper">
 
+    <!-- 연도별 연간 합계 금액이 가장 많은 고객 조회 -->
     <select id="getAnnualTopSumAmtCust" resultType="com.api.devtest.common.DataMap">
         SELECT *
           FROM (
-                SELECT YEAR(TRN_LST.TRN_YMD) AS YEAR
-	                 , CUS_ACNT.CUS_NM AS NAME
-	                 , CUS_ACNT.CUS_ACN AS ACCT_NO
-	                 , SUM(TRN_LST.TRN_AMT - TRN_LST.FEE_AMT) AS SUM_AMT
-                  FROM TB_DEVTEST_TRN_LST TRN_LST
-                     , TB_DEVTEST_CUS_ACNT CUS_ACNT
+                SELECT YEAR(TRN_LST.TRN_YMD) AS YEAR /* 연도 */
+	                 , CUS_ACNT.CUS_NM AS NAME /* 고객명 */
+	                 , CUS_ACNT.CUS_ACN AS ACCT_NO /* 계좌번호 */
+	                 , SUM(TRN_LST.TRN_AMT - TRN_LST.FEE_AMT) AS SUM_AMT /* 합계금액 */
+                  FROM TB_DEVTEST_TRN_LST TRN_LST /* TB_거래내역 */
+                     , TB_DEVTEST_CUS_ACNT CUS_ACNT /* TB_고객계좌 */
                  WHERE TRN_LST.CUS_ACN = CUS_ACNT.CUS_ACN
                    AND TRN_LST.CNCL_YN != 'Y'
                  GROUP BY YEAR, ACCT_NO
                 ) A
          WHERE A.SUM_AMT >= ALL(SELECT SUM(TRN_LST_1.TRN_AMT - TRN_LST_1.FEE_AMT)
-                                  FROM TB_DEVTEST_TRN_LST TRN_LST_1
+                                  FROM TB_DEVTEST_TRN_LST TRN_LST_1 /* TB_거래내역 */
                                  WHERE TRN_LST_1.CNCL_YN != 'Y'
                                    AND A.YEAR = YEAR(TRN_LST_1.TRN_YMD)
                                  GROUP BY YEAR(TRN_LST_1.TRN_YMD), TRN_LST_1.CUS_ACN
@@ -25,21 +26,22 @@
          ORDER BY A.YEAR
     </select>
 
+    <!-- 연도별 연간 거래가 없는 고객 조회 -->
     <select id="getAnnualNoTrnCust" resultType="com.api.devtest.common.DataMap">
-        SELECT TEMP1.YEAR AS YEAR
-             , TEMP1.CUS_NM AS NAME
-             , TEMP1.CUS_ACN AS ACCT_NO
+        SELECT TEMP1.YEAR AS YEAR /* 연도 */
+             , TEMP1.CUS_NM AS NAME /* 고객명 */
+             , TEMP1.CUS_ACN AS ACCT_NO /* 계좌번호 */
           FROM (
                 SELECT *
-                  FROM TB_DEVTEST_CUS_ACNT
+                  FROM TB_DEVTEST_CUS_ACNT /* TB_고객계좌 */
                      , (SELECT DISTINCT YEAR(TRN_YMD) AS YEAR
-                          FROM TB_DEVTEST_TRN_LST
+                          FROM TB_DEVTEST_TRN_LST /* TB_거래내역 */
                         )
                 ) TEMP1
           LEFT OUTER JOIN (SELECT YEAR(TRN_YMD) AS YEAR2
                                 , CUS_ACN AS CUS_ACN2
                                 , MAX(TRN_YMD) AS FNL_TRN_YMD
-                             FROM TB_DEVTEST_TRN_LST
+                             FROM TB_DEVTEST_TRN_LST /* TB_거래내역 */
                             WHERE CNCL_YN != 'Y'
                             GROUP BY YEAR2, CUS_ACN2
                            ) TEMP2
@@ -49,18 +51,20 @@
          ORDER BY TEMP1.YEAR, TEMP1.CUS_ACN
     </select>
 
+    <!-- 거래년도 조회 -->
     <select id="getTrnYear" resultType="com.api.devtest.common.DataMap">
-        SELECT DISTINCT YEAR(TRN_YMD) AS YEAR
-          FROM TB_DEVTEST_TRN_LST
+        SELECT DISTINCT YEAR(TRN_YMD) AS YEAR /* 연도 */
+          FROM TB_DEVTEST_TRN_LST /* TB_거래내역 */
     </select>
 
+    <!-- 해당년도 관리점별 거래금액 조회 -->
     <select id="getMngmBrnTrnAmtYear" resultType="com.api.devtest.common.DataMap" parameterType="com.api.devtest.common.DataMap">
-        SELECT MNGM_BRN.MNGM_BRM AS BR_NAME
-             , MNGM_BRN.MNGM_BRCD AS BR_CODE
-             , SUM(TRN_LST.TRN_AMT) AS SUM_AMT
-          FROM TB_DEVTEST_MNGM_BRN MNGM_BRN
-             , TB_DEVTEST_CUS_ACNT CUS_ACNT
-             , TB_DEVTEST_TRN_LST TRN_LST
+        SELECT MNGM_BRN.MNGM_BRM AS BR_NAME /* 관리점명 */
+             , MNGM_BRN.MNGM_BRCD AS BR_CODE /* 관리점코드 */
+             , SUM(TRN_LST.TRN_AMT) AS SUM_AMT /* 거래금액합계 */
+          FROM TB_DEVTEST_MNGM_BRN MNGM_BRN /* TB_관리점정보 */
+             , TB_DEVTEST_CUS_ACNT CUS_ACNT /* TB_고객계좌 */
+             , TB_DEVTEST_TRN_LST TRN_LST /* TB_거래내역 */
          WHERE MNGM_BRN.MNGM_BRCD = CUS_ACNT.MNGM_BRCD
            AND CUS_ACNT.CUS_ACN = TRN_LST.CUS_ACN
            AND TRN_LST.CNCL_YN != 'Y'
@@ -69,13 +73,14 @@
          ORDER BY SUM_AMT DESC
     </select>
 
+    <!-- 관리점 거래금액 조회 -->
     <select id="getMngmBrnTrnAmt" resultType="com.api.devtest.common.DataMap" parameterType="com.api.devtest.common.DataMap">
-        SELECT MNGM_BRN.MNGM_BRM AS BR_NAME
-             , MNGM_BRN.MNGM_BRCD AS BR_CODE
-             , SUM(TRN_LST.TRN_AMT) AS SUM_AMT
-          FROM TB_DEVTEST_MNGM_BRN MNGM_BRN
-             , TB_DEVTEST_CUS_ACNT CUS_ACNT
-             , TB_DEVTEST_TRN_LST TRN_LST
+        SELECT MNGM_BRN.MNGM_BRM AS BR_NAME /* 관리점명 */
+             , MNGM_BRN.MNGM_BRCD AS BR_CODE /* 관리점코드 */
+             , SUM(TRN_LST.TRN_AMT) AS SUM_AMT /* 거래금액합계 */
+          FROM TB_DEVTEST_MNGM_BRN MNGM_BRN /* TB_관리점정보 */
+             , TB_DEVTEST_CUS_ACNT CUS_ACNT /* TB_고객계좌 */
+             , TB_DEVTEST_TRN_LST TRN_LST /* TB_거래내역 */
          WHERE MNGM_BRN.MNGM_BRCD = CUS_ACNT.MNGM_BRCD
            AND CUS_ACNT.CUS_ACN = TRN_LST.CUS_ACN
            AND TRN_LST.CNCL_YN != 'Y'
@@ -83,14 +88,17 @@
          GROUP BY BR_CODE
     </select>
 
+    <!-- 관리점 이관 -->
     <update id="putBranchTransfer" parameterType="com.api.devtest.common.DataMap">
-        UPDATE TB_DEVTEST_CUS_ACNT
+        UPDATE TB_DEVTEST_CUS_ACNT /* TB_고객계좌 */
            SET MNGM_BRCD = #{afterBrCode}
          WHERE MNGM_BRCD = #{brCode}
     </update>
 
+    <!-- 관리점 삭제 -->
     <delete id="deleteBranch" parameterType="com.api.devtest.common.DataMap">
-        DELETE FROM TB_DEVTEST_MNGM_BRN
+        DELETE FROM TB_DEVTEST_MNGM_BRN /* TB_관리점정보 */
          WHERE MNGM_BRCD = #{brCode}
     </delete>
+
 </mapper>
